@@ -21,8 +21,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # UPDATES:
+# 2024-11-11 - Patrick T. Rutledge III - rut31337:
+#       Installation and setup README.md updates
 # 2024-11-11 - John Apple II - 9strands:
-#       Certificate generation errors due to order and README.md updates
+#       Certificate generation errors due to order
 
 # You need to create a file called /root/.acme.sh/update.conf with the
 # following lines in it:
