@@ -6,6 +6,7 @@
 
 # Copyright (c) 2018 - Rob Thomas - xrobau@linux.com
 
+
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -19,6 +20,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# UPDATES:
+# 2024-11-11 - John Apple II - 9strands:
+#       Certificate generation errors due to order and README.md updates
 
 # You need to create a file called /root/.acme.sh/update.conf with the
 # following lines in it:
@@ -29,8 +33,8 @@ ADMINPASS='admin'
 
 # Replacing the values, obviously. 
 if [ ! -e /root/.acme.sh/update.conf ]; then
-	echo "No update.conf file configured, can not update. Read the update script for instructions!"
-	exit 1
+        echo "No update.conf file configured, can not update. Read the update script for instructions!"
+        exit 1
 fi
 
 . /root/.acme.sh/update.conf
@@ -46,8 +50,8 @@ eval $(awk '{ print "export " $1 }' /etc/sysconfig/vmware-environment)
 CERT=/root/.acme.sh/$CERTNAME/$CERTNAME.cer
 
 if [ ! -e $CERT ]; then
-	echo "Can't find cert $CERT - is update.conf correct?"
-	exit 1
+        echo "Can't find cert $CERT - is update.conf correct?"
+        exit 1
 fi
 
 # Compare the MD5sums of the running cert and the current LE cert
@@ -55,19 +59,21 @@ LIVEMD5=$(md5sum $CURRENTLIVE | cut -d\  -f1)
 CURRENTMD5=$(md5sum $CERT | cut -d\  -f1)
 
 if [ "$LIVEMD5" == "$CURRENTMD5" ]; then
-	# Nothing to be done. Current certificate is correct
-	exit 0
+        # Nothing to be done. Current certificate is correct
+        exit 0
 fi
 
 # We need to update this machine with the new certificate.
 KEY=/root/.acme.sh/$CERTNAME/$CERTNAME.key
+MYCERT=/root/.acme.sh/$CERTNAME/$CERTNAME.cer
 CHAIN=/root/.acme.sh/$CERTNAME/fullchain.cer
-CHAIN_WITH_ROOT=/root/.acme.sh/$CERTNAME/fullchainwithroot.cer
+CA=/root/.acme.sh/$CERTNAME/ca.cer
+COMBINED_CERT=/root/.acme.sh/$CERTNAME/combined-cert.cer
 
-# Add Self-Signed to fullchain as required by certificate-manager
+# Add Self-Signed to combined cert as required by certificate-manager
 
-curl -s https://letsencrypt.org/certs/isrgrootx1.pem > ${CHAIN_WITH_ROOT}
-cat ${CHAIN} >> /root/.acme.sh/$CERTNAME/fullchainwithroot.cer
+cat ${MYCERT} > ${COMBINED_CERT}
+cat ${CHAIN} >> ${COMBINED_CERT}
 
 # We delay briefly between account and password, as it's trying to open /dev/tty
 # which has the potential to lose characters. To be on the safe side, we sleep
@@ -81,7 +87,7 @@ cat ${CHAIN} >> /root/.acme.sh/$CERTNAME/fullchainwithroot.cer
   sleep 1
   printf '2\n'
   sleep 1
-  printf '%s\n%s\n%s\ny\n\n' "$CERT" "$KEY" "$CHAIN_WITH_ROOT"
+  printf '%s\n%s\n%s\ny\n\n' "$COMBINED_CERT" "$KEY" "$CA"
 ) | setsid /usr/lib/vmware-vmca/bin/certificate-manager
 
 # 'setsid' detatches certman from /dev/tty, so it's forced to use stdin.
